@@ -66,9 +66,13 @@ class _TeamDetailsPageState extends State<TeamDetailsPage> {
       setState(() {
         _isLoadingSquad = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading squad: $e')),
-      );
+      // Only show snackbar if not a 404 error
+      if (!e.toString().contains('404')) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading squad: $e')),
+        );
+      }
+      // For 404, just show 'No squad information available' in the UI
     }
   }
 

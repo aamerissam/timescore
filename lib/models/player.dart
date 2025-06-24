@@ -196,4 +196,12 @@ class Country {
   }
 
   static Country empty() => Country(alpha2: '', name: '', slug: '');
+
+  Country copyWith({String? alpha2, String? name, String? slug}) {
+    return Country(
+      alpha2: alpha2 ?? this.alpha2,
+      name: name ?? this.name,
+      slug: slug ?? this.slug,
+    );
+  }
 } 

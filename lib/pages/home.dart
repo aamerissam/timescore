@@ -8,6 +8,7 @@ import 'team_details.dart';
 import 'map.dart';
 import 'favorite_teams.dart';
 import 'favorite_players.dart';
+import 'tournament_details.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -79,6 +80,13 @@ class _HomePageState extends State<HomePage> {
         context,
         MaterialPageRoute(
           builder: (context) => TeamDetailsPage(team: item),
+        ),
+      );
+    } else if (item is Tournament) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => TournamentDetailsPage(tournament: item),
         ),
       );
     }
@@ -256,18 +264,22 @@ class _HomePageState extends State<HomePage> {
                               leading: CircleAvatar(
                                 backgroundColor: Colors.green[100],
                                 child: Icon(
-                                  item is Player ? Icons.person : Icons.sports_soccer,
+                                  item is Player ? Icons.person : item is TeamModel ? Icons.sports_soccer : Icons.sports_soccer,
                                   color: Colors.green[800],
                                 ),
                               ),
                               title: Text(
-                                item is Player ? item.name : item.name,
+                                item is Player ? item.name : item is TeamModel ? item.name : item.name,
                                 style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
                               subtitle: Text(
-                                item is Player 
+                                item is Player
                                     ? '${item.position ?? 'N/A'} • ${item.team?.name ?? 'No Team'}'
-                                    : '${item.country?.name ?? 'N/A'} • ${item.sport.name}',
+                                    : item is TeamModel
+                                        ? '${item.country?.name ?? 'N/A'} • ${item.sport?.name ?? ''}'
+                                        : (item is Tournament && item.category != null && item.category.sport != null)
+                                            ? '${item.category.country.name} • ${item.category.sport.name}'
+                                            : '',
                               ),
                               trailing: const Icon(Icons.arrow_forward_ios),
                               onTap: () => _navigateToDetails(item),

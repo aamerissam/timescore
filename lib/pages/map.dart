@@ -5,6 +5,7 @@ import 'package:flutter_map/flutter_map.dart' as osm;
 import 'package:latlong2/latlong.dart' as latlng;
 import '../services/api_service.dart';
 import '../models/team.dart';
+import '../models/player.dart';
 
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
@@ -106,7 +107,15 @@ class _MapPageState extends State<MapPage> {
         name: league['name'],
         slug: '',
         userCount: 0,
-        category: Category.empty(),
+        category: Category(
+          id: 0,
+          name: league['country'] ?? '',
+          slug: '',
+          alpha2: '',
+          flag: '',
+          sport: Sport.empty(),
+          country: Country.empty().copyWith(name: league['country'] ?? ''),
+        ),
         displayInverseHomeAwayTeams: false,
       )).toList();
       setState(() {
