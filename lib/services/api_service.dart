@@ -5,7 +5,7 @@ import '../models/team.dart';
 
 class ApiService {
   static const String _baseUrl = 'https://sofascore.p.rapidapi.com';
-  static const String _apiKey = '841a931021mshb8e199294a1a42cp15c4bbjsn9ed0c52ef22e';
+  static const String _apiKey = '34381402e2mshbadb203bf2bb784p1e9553jsnb8e69dbe43da';
   static const String _apiHost = 'sofascore.p.rapidapi.com';
 
   static Map<String, String> get _headers => {
@@ -61,18 +61,29 @@ class ApiService {
         headers: _headers,
       );
 
-      print('Get-seasons API status for tournamentId=$tournamentId: \\${response.statusCode}');
-      print('Get-seasons API body for tournamentId=$tournamentId: \\${response.body}');
+      print('Get-seasons API status for tournamentId=$tournamentId: ${response.statusCode}');
+      print('Get-seasons API body for tournamentId=$tournamentId: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final seasons = data['seasons'] as List?;
         if (seasons != null && seasons.isNotEmpty) {
+          // Look specifically for 23/24 season
+          for (final season in seasons) {
+            final year = season['year'] as String?;
+            if (year == '23/24') {
+              final seasonId = season['id'];
+              print('  Found 23/24 season id=$seasonId for tournamentId=$tournamentId');
+              return seasonId;
+            }
+          }
+          
+          // Fallback to first season if 23/24 not found
           final seasonId = seasons.first['id'];
-          print('  Found season id=\\${seasonId} for tournamentId=\\${tournamentId}');
+          print('  23/24 season not found, using first season id=$seasonId for tournamentId=$tournamentId');
           return seasonId;
         } else {
-          print('  No seasons found for tournamentId=\\${tournamentId}');
+          print('  No seasons found for tournamentId=$tournamentId');
         }
       }
       return null;

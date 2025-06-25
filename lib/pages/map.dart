@@ -20,13 +20,6 @@ const List<Map<String, dynamic>> topLeagues = [
   {"id": 23, "name": "Serie A", "country": "Italy"},
   {"id": 35, "name": "Bundesliga", "country": "Germany"},
   {"id": 34, "name": "Ligue 1", "country": "France"},
-  {"id": 155, "name": "Liga Profesional de Fútbol", "country": "Argentina"},
-  {"id": 11539, "name": "Primera A, Apertura", "country": "Colombia"},
-  {"id": 937, "name": "Botola Pro", "country": "Morocco"},
-  {"id": 825, "name": "Stars League", "country": "Qatar"},
-  {"id": 196, "name": "J1 League", "country": "Japan"},
-  {"id": 410, "name": "K League 1", "country": "South Korea"},
-  {"id": 11621, "name": "Liga MX, Apertura", "country": "Mexico"},
 ];
 
 class _MapPageState extends State<MapPage> {
@@ -100,7 +93,7 @@ class _MapPageState extends State<MapPage> {
 
   Future<void> _loadTournamentTopTeams() async {
     try {
-      print('Starting to load top teams for top leagues...');
+      print('Starting to load top 3 teams for top leagues...');
       // Use the hardcoded top leagues
       final tournaments = topLeagues.map((league) => Tournament(
         id: league['id'],
@@ -127,23 +120,27 @@ class _MapPageState extends State<MapPage> {
         _tournamentColors[tournaments[i].id] = _colors[i % _colors.length];
       }
 
-      // Get top teams for each tournament
+      // Get top 3 teams for each tournament
       final allTopTeams = <TournamentTopTeamWithTournament>[];
       for (final tournament in tournaments) {
         try {
-          print('Fetching season for league: \\${tournament.name} (id: \\${tournament.id})');
+          print('Fetching season for league: ${tournament.name} (id: ${tournament.id})');
           final seasonId = await ApiService.getTournamentCurrentSeasonId(tournament.id);
-          print('  Season ID for \\${tournament.name}: \\${seasonId}');
+          print('  Season ID for ${tournament.name}: $seasonId');
           if (seasonId != null) {
-            print('  Fetching top teams for \\${tournament.name}...');
+            print('  Fetching top teams for ${tournament.name}...');
             final topTeams = await ApiService.getTournamentTopTeams(tournament.id, seasonId);
-            print('  Got \\${topTeams.length} top teams for \\${tournament.name}');
+            print('  Got ${topTeams.length} top teams for ${tournament.name}');
+            
+            // Take only the top 3 teams
+            final top3Teams = topTeams.take(3).toList();
+            print('  Using top 3 teams for ${tournament.name}: ${top3Teams.map((t) => t.team.name).join(', ')}');
             
             // Fetch detailed team info with coordinates for each team
             final teamsWithDetails = <TournamentTopTeamWithTournament>[];
-            for (final topTeam in topTeams) {
+            for (final topTeam in top3Teams) {
               try {
-                print('    Fetching details for team: \\${topTeam.team.name} (id: \\${topTeam.team.id})');
+                print('    Fetching details for team: ${topTeam.team.name} (id: ${topTeam.team.id})');
                 final detailedTeam = await ApiService.getTeamDetails(topTeam.team.id);
                 
                 // Create a new TournamentTopTeam with the detailed team info
@@ -157,9 +154,9 @@ class _MapPageState extends State<MapPage> {
                   tournament: tournament,
                 ));
                 
-                print('    Team \\${detailedTeam.name} coordinates: lat=\\${detailedTeam.latitude}, lng=\\${detailedTeam.longitude}');
+                print('    Team ${detailedTeam.name} coordinates: lat=${detailedTeam.latitude}, lng=${detailedTeam.longitude}');
               } catch (e) {
-                print('    Error fetching details for team \\${topTeam.team.name}: $e');
+                print('    Error fetching details for team ${topTeam.team.name}: $e');
                 // Still add the team without coordinates
                 teamsWithDetails.add(TournamentTopTeamWithTournament(
                   topTeam: topTeam,
@@ -170,13 +167,13 @@ class _MapPageState extends State<MapPage> {
             
             allTopTeams.addAll(teamsWithDetails);
           } else {
-            print('  No season ID found for \\${tournament.name}');
+            print('  No season ID found for ${tournament.name}');
           }
         } catch (e) {
-          print('  Error loading top teams for league \\${tournament.name}: $e');
+          print('  Error loading top teams for league ${tournament.name}: $e');
         }
       }
-      print('Total top teams loaded: \\${allTopTeams.length}');
+      print('Total top 3 teams loaded: ${allTopTeams.length}');
       setState(() {
         _topTeams = allTopTeams;
       });
@@ -201,12 +198,12 @@ class _MapPageState extends State<MapPage> {
       // Use real coordinates if available
       if (team.latitude != null && team.longitude != null) {
         coordinates.add(latlng.LatLng(team.latitude!, team.longitude!));
-        print('Using REAL coordinates for \\${team.name}: lat=\\${team.latitude}, lng=\\${team.longitude}');
+        print('Using REAL coordinates for ${team.name}: lat=${team.latitude}, lng=${team.longitude}');
       } else {
         // Fallback to city-specific coordinates based on team name and country
         final cityCoords = _getCityCoordinates(team.name, team.country?.name ?? 'Unknown');
         coordinates.add(cityCoords);
-        print('Using CITY coordinates for \\${team.name} (\\${team.country?.name ?? 'Unknown'}): lat=\\${cityCoords.latitude}, lng=\\${cityCoords.longitude}');
+        print('Using CITY coordinates for ${team.name} (${team.country?.name ?? 'Unknown'}): lat=${cityCoords.latitude}, lng=${cityCoords.longitude}');
       }
     }
     
@@ -215,7 +212,7 @@ class _MapPageState extends State<MapPage> {
 
   // Get default coordinates for a country
   latlng.LatLng _getDefaultCoordinatesForCountry(String country) {
-    // Default coordinates for major countries
+    // Default coordinates for the top 5 European countries
     switch (country.toLowerCase()) {
       case 'england':
         return latlng.LatLng(51.5074, -0.1278); // London
@@ -227,22 +224,8 @@ class _MapPageState extends State<MapPage> {
         return latlng.LatLng(52.5200, 13.4050); // Berlin
       case 'france':
         return latlng.LatLng(48.8566, 2.3522); // Paris
-      case 'argentina':
-        return latlng.LatLng(-34.6118, -58.3960); // Buenos Aires
-      case 'colombia':
-        return latlng.LatLng(4.7110, -74.0721); // Bogota
-      case 'morocco':
-        return latlng.LatLng(31.7917, -7.0926); // Morocco center
-      case 'qatar':
-        return latlng.LatLng(25.2854, 51.5310); // Doha
-      case 'japan':
-        return latlng.LatLng(35.6762, 139.6503); // Tokyo
-      case 'south korea':
-        return latlng.LatLng(37.5665, 126.9780); // Seoul
-      case 'mexico':
-        return latlng.LatLng(19.4326, -99.1332); // Mexico City
       default:
-        return latlng.LatLng(31.7917, -7.0926); // Default to Morocco
+        return latlng.LatLng(48.8566, 2.3522); // Default to Paris (center of the 5 leagues)
     }
   }
 
@@ -297,7 +280,7 @@ class _MapPageState extends State<MapPage> {
     
     // Try to find exact team name match
     if (cityCoordinates.containsKey(teamNameLower)) {
-      print('  Found exact city match for \\${teamName}: \\${cityCoordinates[teamNameLower]}');
+      print('  Found exact city match for ${teamName}: ${cityCoordinates[teamNameLower]}');
       return cityCoordinates[teamNameLower]!;
     }
     
@@ -305,13 +288,13 @@ class _MapPageState extends State<MapPage> {
     for (final entry in cityCoordinates.entries) {
       if (teamNameLower.contains(entry.key.split(' ').last) || 
           entry.key.contains(teamNameLower.split(' ').last)) {
-        print('  Found partial city match for \\${teamName}: \\${entry.value}');
+        print('  Found partial city match for ${teamName}: ${entry.value}');
         return entry.value;
       }
     }
     
     // Fallback to country coordinates
-    print('  No city match found for \\${teamName}, using country default');
+    print('  No city match found for ${teamName}, using country default');
     return _getDefaultCoordinatesForCountry(country);
   }
 
@@ -327,19 +310,27 @@ class _MapPageState extends State<MapPage> {
     final teamCoordinates = _getTeamCoordinates();
 
     // Debug: print number of teams and their info
-    print('Placing \\${_topTeams.length} team markers on the map:');
+    print('Placing ${_topTeams.length} team markers on the map:');
     for (int i = 0; i < _topTeams.length; i++) {
       final teamWithTournament = _topTeams[i];
       final coordinate = teamCoordinates[i];
       final team = teamWithTournament.topTeam.team;
       final hasRealCoords = team.latitude != null && team.longitude != null;
       final coordSource = hasRealCoords ? 'REAL' : 'DEFAULT';
-      print('Marker: Tournament="\\${teamWithTournament.tournament.name}", Team="\\${team.name}", Lat=\\${coordinate.latitude}, Lng=\\${coordinate.longitude} (\\${coordSource})');
+      print('Marker: Tournament="${teamWithTournament.tournament.name}", Team="${team.name}", Lat=${coordinate.latitude}, Lng=${coordinate.longitude} (${coordSource})');
     }
 
-    // Always center on Morocco
-    final latlng.LatLng mapCenter = latlng.LatLng(31.7917, -7.0926);
-    print('Map center: Always Morocco: 31.7917, -7.0926');
+    // Center on the first team's coordinates, or default to Paris if no teams
+    final latlng.LatLng mapCenter = teamCoordinates.isNotEmpty 
+        ? teamCoordinates.first 
+        : latlng.LatLng(48.8566, 2.3522);
+    
+    if (teamCoordinates.isNotEmpty) {
+      final firstTeam = _topTeams.first.topTeam.team;
+      print('Map center: First team "${firstTeam.name}" coordinates: ${mapCenter.latitude}, ${mapCenter.longitude}');
+    } else {
+      print('Map center: No teams found, defaulting to Paris: 48.8566, 2.3522');
+    }
 
     return Scaffold(
       appBar: AppBar(
