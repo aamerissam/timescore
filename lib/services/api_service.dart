@@ -78,7 +78,7 @@ class ApiService {
             }
           }
           
-          // Fallback to first season if 23/24 not found
+          // Use first season if 23/24 not found
           final seasonId = seasons.first['id'];
           print('  23/24 season not found, using first season id=$seasonId for tournamentId=$tournamentId');
           return seasonId;

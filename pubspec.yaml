@@ -47,15 +47,9 @@ dependencies:
   # Cached network image
   cached_network_image: ^3.3.0
   
-  # Google Maps
-  # google_maps_flutter: ^2.5.0
-  
-  # OSM fallback
+  # Maps
   flutter_map: ^6.1.0
   latlong2: ^0.9.0
-  
-  # Google Play Services check
-  # google_api_availability: ^5.0.1
   
   # Location services
   geolocator: ^10.1.0

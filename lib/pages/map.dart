@@ -188,7 +188,7 @@ class _MapPageState extends State<MapPage> {
     }
   }
 
-  // Get coordinates for teams, using real coordinates if available, fallback to defaults
+  // Get coordinates for teams, using real coordinates if available, otherwise use city/country defaults
   List<latlng.LatLng> _getTeamCoordinates() {
     final coordinates = <latlng.LatLng>[];
     
@@ -200,7 +200,7 @@ class _MapPageState extends State<MapPage> {
         coordinates.add(latlng.LatLng(team.latitude!, team.longitude!));
         print('Using REAL coordinates for ${team.name}: lat=${team.latitude}, lng=${team.longitude}');
       } else {
-        // Fallback to city-specific coordinates based on team name and country
+        // Use city-specific coordinates based on team name and country
         final cityCoords = _getCityCoordinates(team.name, team.country?.name ?? 'Unknown');
         coordinates.add(cityCoords);
         print('Using CITY coordinates for ${team.name} (${team.country?.name ?? 'Unknown'}): lat=${cityCoords.latitude}, lng=${cityCoords.longitude}');
@@ -293,7 +293,7 @@ class _MapPageState extends State<MapPage> {
       }
     }
     
-    // Fallback to country coordinates
+    // Use country coordinates as default
     print('  No city match found for ${teamName}, using country default');
     return _getDefaultCoordinatesForCountry(country);
   }
